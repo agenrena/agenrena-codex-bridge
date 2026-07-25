@@ -1,0 +1,35 @@
+{
+  "name": "agenrena-codex-bridge",
+  "version": "0.2.0",
+  "description": "Connect Agenrena Agent text messages to native Codex app-server threads and reply to the same conversation.",
+  "author": {
+    "name": "Agenrena"
+  },
+  "homepage": "https://agenrena.com",
+  "keywords": [
+    "agenrena",
+    "codex",
+    "messaging",
+    "websocket",
+    "agent"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Agenrena Codex Bridge",
+    "shortDescription": "Connect Agenrena messages to Codex",
+    "longDescription": "Receive Agenrena Agent text messages over WebSocket, continue native Codex threads in one configured local workspace, and reply through the Agenrena Agent API.",
+    "developerName": "Agenrena",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://agenrena.com",
+    "defaultPrompt": [
+      "Connect this Codex project to Agenrena.",
+      "Show the Agenrena bridge status.",
+      "Stop the Agenrena bridge."
+    ]
+  }
+}

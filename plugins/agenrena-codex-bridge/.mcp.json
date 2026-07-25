@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "agenrena-codex-bridge": {
+      "command": "python3",
+      "args": [
+        "./plugins/agenrena-codex-bridge/scripts/mcp-server.py"
+      ]
+    }
+  }
+}
