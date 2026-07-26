@@ -34,9 +34,10 @@ See [PLAN.md](PLAN.md) for the protocol contracts and later phases.
   registration.
 - `plugins/agenrena-codex-bridge/skills/agenrena-bridge`: instructions for
   Codex to configure and operate the bridge safely.
-- `plugins/agenrena-codex-bridge/scripts/mcp-server.py`: MCP entry point.
-- `plugins/agenrena-codex-bridge/src/agenrena_codex_bridge`: the WebSocket,
-  Codex app-server, reply API, and background-process implementation.
+- `plugins/agenrena-codex-bridge/.mcp.json`: starts the bridge through the
+  installed Agenrena CLI.
+- The Agenrena CLI owns the Go WebSocket, Codex app-server, reply API, and
+  background-process implementation.
 
 The MCP server exposes only:
 
@@ -49,9 +50,13 @@ It deliberately has no `send_message` tool.
 
 ## Install from GitHub
 
-Python 3.9 or newer and the `codex` executable are required. The plugin runtime
-uses only the Python standard library, so users do not need to create a virtual
-environment or run `pip install`.
+The `agenrena` and `codex` executables are required. Users do not need Python,
+Go, a virtual environment, or any pip/npm dependencies. Install or update the
+Agenrena CLI before installing the plugin:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/agenrena/agenrena-cli/main/install.sh | sh
+```
 
 Publish this repository to GitHub, then install it as a Codex marketplace:
 
@@ -179,8 +184,7 @@ The underlying bridge can still be run without Codex plugin management:
 
 ```bash
 export CODEX_WORKSPACE=/absolute/path/to/project
-PYTHONPATH=plugins/agenrena-codex-bridge/src \
-  python3 -m agenrena_codex_bridge.main
+agenrena codex-bridge daemon
 ```
 
 To select another Agenrena environment, its WebSocket endpoint must still use
@@ -202,15 +206,10 @@ The runtime rejects `ws://` endpoints.
 
 ## Tests
 
-The automated tests use fake Agenrena and Codex endpoints:
+The bridge implementation and its fake Agenrena/Codex tests live in the
+Agenrena CLI repository:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -r requirements-dev.txt
-PYTHONPATH=plugins/agenrena-codex-bridge/src \
-  .venv/bin/python -m unittest discover -s tests -v
+cd /path/to/agenrena-cli
+go test -race ./...
 ```
-
-The test-only `websockets` dependency runs the fake WebSocket server; it is not
-imported or required by the installed plugin. `PyYAML` is used only by the
-official Skill validator.

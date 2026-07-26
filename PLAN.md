@@ -18,11 +18,11 @@ The plugin's MCP surface is management-only: setup, start, status, and stop.
 
 - Load the Agenrena API key from the existing Agenrena CLI credentials file.
 - Connect as a WebSocket client to Agenrena Agent events.
-- Use a bundled standard-library RFC 6455 client so GitHub plugin installation
-  requires no pip or virtual environment bootstrap.
+- Use the Agenrena CLI's standard-library RFC 6455 client so the plugin does
+  not need to bundle a platform-specific executable.
 - Accept Agenrena `message_type: "text"`, `"image"`, and `"sticker"` payloads.
 - Download `images[].url` and `sticker.image_url` into restricted temporary
-  storage using only the Python standard library.
+  storage using only the Go standard library.
 - Require public HTTPS media targets, validate every redirect and resolved
   address, enforce count and byte limits, and verify image signatures.
 - Deduplicate inbound Agenrena message IDs.
@@ -240,8 +240,8 @@ Runtime environment:
 - The Codex skill and plugin manifests pass their official validators.
 - The repository marketplace resolves to the packaged
   `agenrena-codex-bridge` plugin.
-- The MCP server and bridge import successfully under system Python without
-  third-party packages.
+- The MCP server and bridge ship inside the cross-platform Agenrena CLI without
+  third-party modules.
 
 ## Later Phases
 

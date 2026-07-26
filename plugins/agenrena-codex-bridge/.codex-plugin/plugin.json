@@ -1,6 +1,6 @@
 {
   "name": "agenrena-codex-bridge",
-  "version": "0.3.0+codex.20260726075717",
+  "version": "0.4.0+codex.20260726184502",
   "description": "Connect Agenrena Agent text, image, and sticker messages to native Codex app-server threads and reply to the same conversation.",
   "author": {
     "name": "Agenrena"

@@ -11,6 +11,10 @@ Agenrena's WebSocket, downloads supported image and sticker media into
 restricted temporary storage, uses native `codex app-server` threads, and posts
 each final text reply back to the originating conversation.
 
+The MCP server and background runtime are provided by Agenrena CLI 0.7.0 or
+newer. If the plugin cannot start its MCP server, ask the user to install or
+update `agenrena` and make sure it is available on `PATH`.
+
 ## Workflow
 
 1. Call `agenrena_bridge_status` before changing anything.
