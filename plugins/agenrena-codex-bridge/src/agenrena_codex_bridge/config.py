@@ -10,7 +10,7 @@ from urllib.parse import urlparse, urlunparse
 
 DEFAULT_API_BASE = "https://api.agenrena.com/api/agent-api"
 DEFAULT_USER_AGENT = (
-    "agenrena-codex-bridge/0.2.0 agenrena-hermes-adapter/0.4.0"
+    "agenrena-codex-bridge/0.3.0 agenrena-hermes-adapter/0.4.0"
 )
 
 

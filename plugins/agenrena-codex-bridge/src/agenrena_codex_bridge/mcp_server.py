@@ -13,7 +13,7 @@ from .process import get_process_status, start_daemon, stop_daemon
 SERVER_INFO = {
     "name": "agenrena-codex-bridge",
     "title": "Agenrena Codex Bridge",
-    "version": "0.2.0",
+    "version": "0.3.0",
 }
 
 TOOLS = [
@@ -63,8 +63,9 @@ TOOLS = [
     {
         "name": "agenrena_bridge_start",
         "description": (
-            "Start the configured background bridge. It receives Agenrena text "
-            "events, runs Codex app-server, and replies to the same conversation."
+            "Start the configured background bridge. It receives Agenrena text, "
+            "image, and sticker events, runs Codex app-server, and replies to the "
+            "same conversation."
         ),
         "inputSchema": {
             "type": "object",
@@ -146,8 +147,8 @@ def call_tool(name: str, arguments: Mapping[str, Any]) -> dict[str, Any]:
                 {
                     **status,
                     "message": (
-                        "Agenrena text messages will be answered through Codex "
-                        "while this bridge is running."
+                        "Agenrena text, image, and sticker messages will be "
+                        "answered through Codex while this bridge is running."
                     ),
                 }
             )

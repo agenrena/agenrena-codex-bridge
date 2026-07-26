@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import unittest
 
-from agenrena_codex_bridge.models import IncomingTextMessage, PendingReply
+from agenrena_codex_bridge.models import IncomingMessage, PendingReply
 
 
 class ModelTests(unittest.TestCase):
     def test_current_agenrena_text_payload_is_normalized(self):
-        message = IncomingTextMessage.from_payload(
+        message = IncomingMessage.from_payload(
             {
                 "id": "message-1",
                 "conversation_id": "conversation-1",
@@ -26,25 +26,75 @@ class ModelTests(unittest.TestCase):
         assert message is not None
         self.assertEqual(message.text, "hello Codex")
         self.assertEqual(message.sender_name, "Alice")
+        self.assertEqual(message.message_type, "text")
+        self.assertEqual(message.media, ())
 
-    def test_non_text_and_empty_text_are_ignored(self):
-        self.assertIsNone(
-            IncomingTextMessage.from_payload(
-                {
-                    "id": "image-1",
-                    "conversation_id": "conversation-1",
-                    "message_type": "image",
-                    "text": "",
-                }
-            )
+    def test_image_only_payload_is_normalized(self):
+        message = IncomingMessage.from_payload(
+            {
+                "id": "image-1",
+                "conversation_id": "conversation-1",
+                "message_type": "image",
+                "text": "",
+                "images": [
+                    {
+                        "url": "https://cdn.example/image.jpg?signature=secret",
+                        "mime_type": "image/jpeg",
+                    }
+                ],
+            }
         )
+        self.assertIsNotNone(message)
+        assert message is not None
+        self.assertEqual(message.text, "")
+        self.assertEqual(len(message.media), 1)
+        self.assertEqual(message.media[0].kind, "image")
+        self.assertEqual(message.media[0].mime_type, "image/jpeg")
+
+    def test_sticker_payload_uses_sticker_image_url(self):
+        message = IncomingMessage.from_payload(
+            {
+                "id": "sticker-message-1",
+                "conversation_id": "conversation-1",
+                "message_type": "sticker",
+                "text": "",
+                "images": [],
+                "sticker": {
+                    "id": "message-sticker-1",
+                    "sticker_id": "sticker-1",
+                    "pack_id": "pack-1",
+                    "pack_available": True,
+                    "image_url": "https://stickers.example/sticker.png",
+                },
+            }
+        )
+        self.assertIsNotNone(message)
+        assert message is not None
+        self.assertEqual(len(message.media), 1)
+        self.assertEqual(message.media[0].kind, "sticker")
+        self.assertEqual(
+            message.media[0].url,
+            "https://stickers.example/sticker.png",
+        )
+
+    def test_unsupported_and_empty_messages_are_ignored(self):
         self.assertIsNone(
-            IncomingTextMessage.from_payload(
+            IncomingMessage.from_payload(
                 {
                     "id": "message-1",
                     "conversation_id": "conversation-1",
                     "message_type": "text",
                     "text": " ",
+                }
+            )
+        )
+        self.assertIsNone(
+            IncomingMessage.from_payload(
+                {
+                    "id": "audio-1",
+                    "conversation_id": "conversation-1",
+                    "message_type": "audio",
+                    "text": "listen",
                 }
             )
         )
@@ -63,4 +113,3 @@ class ModelTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

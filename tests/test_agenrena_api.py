@@ -43,7 +43,7 @@ class AgenrenaAPIClientTests(unittest.IsolatedAsyncioTestCase):
                 api_base=f"http://127.0.0.1:{server.server_port}/api/agent-api",
                 api_key="agr_test_secret",
                 user_agent=(
-                    "agenrena-codex-bridge/0.2.0 "
+                    "agenrena-codex-bridge/0.3.0 "
                     "agenrena-hermes-adapter/0.4.0"
                 ),
             )
@@ -72,7 +72,7 @@ class AgenrenaAPIClientTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(
             CaptureHandler.request_headers.get("User-Agent"),
-            "agenrena-codex-bridge/0.2.0 agenrena-hermes-adapter/0.4.0",
+            "agenrena-codex-bridge/0.3.0 agenrena-hermes-adapter/0.4.0",
         )
         self.assertEqual(
             CaptureHandler.request_body,

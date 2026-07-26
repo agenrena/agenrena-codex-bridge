@@ -1,5 +1,6 @@
 import json
 import sys
+from pathlib import Path
 
 
 def send(payload):
@@ -25,6 +26,24 @@ for raw in sys.stdin:
             }
         )
     elif method == "turn/start":
+        if len(sys.argv) > 1:
+            Path(sys.argv[1]).write_text(
+                json.dumps(params),
+                encoding="utf-8",
+            )
+        missing_image = any(
+            item.get("type") == "localImage"
+            and not Path(item["path"]).is_file()
+            for item in params.get("input") or []
+        )
+        if missing_image:
+            send(
+                {
+                    "id": request_id,
+                    "error": {"message": "local image does not exist"},
+                }
+            )
+            continue
         turn_id = "turn-test"
         send({"id": request_id, "result": {"turn": {"id": turn_id}}})
         send(
@@ -84,4 +103,3 @@ for raw in sys.stdin:
                 "error": {"message": f"unsupported test method: {method}"},
             }
         )
-

@@ -5,25 +5,69 @@ from typing import Any, Mapping, Optional
 
 
 @dataclass(frozen=True)
-class IncomingTextMessage:
+class IncomingMedia:
+    kind: str
+    url: str
+    mime_type: Optional[str]
+
+
+@dataclass(frozen=True)
+class IncomingMessage:
     message_id: str
     conversation_id: str
     sender_id: Optional[str]
     sender_name: Optional[str]
+    message_type: str
     text: str
+    media: tuple[IncomingMedia, ...]
     created_at: Optional[str]
 
     @classmethod
     def from_payload(
         cls, payload: Mapping[str, Any]
-    ) -> Optional["IncomingTextMessage"]:
-        if payload.get("message_type") != "text":
+    ) -> Optional["IncomingMessage"]:
+        message_type = str(payload.get("message_type") or "").strip()
+        if message_type not in {"text", "image", "sticker"}:
             return None
 
         message_id = str(payload.get("id") or "").strip()
         conversation_id = str(payload.get("conversation_id") or "").strip()
         text = str(payload.get("text") or "").strip()
-        if not message_id or not conversation_id or not text:
+        if not message_id or not conversation_id:
+            return None
+
+        media: list[IncomingMedia] = []
+        images = payload.get("images")
+        if isinstance(images, list):
+            for image in images:
+                if not isinstance(image, Mapping):
+                    continue
+                url = str(image.get("url") or "").strip()
+                if not url:
+                    continue
+                mime_type = str(image.get("mime_type") or "").strip() or None
+                media.append(
+                    IncomingMedia(
+                        kind="image",
+                        url=url,
+                        mime_type=mime_type,
+                    )
+                )
+
+        if message_type == "sticker":
+            sticker = payload.get("sticker")
+            if isinstance(sticker, Mapping):
+                image_url = str(sticker.get("image_url") or "").strip()
+                if image_url:
+                    media.append(
+                        IncomingMedia(
+                            kind="sticker",
+                            url=image_url,
+                            mime_type="image/png",
+                        )
+                    )
+
+        if not text and not media:
             return None
 
         sender = payload.get("sender")
@@ -38,7 +82,9 @@ class IncomingTextMessage:
             conversation_id=conversation_id,
             sender_id=sender_id,
             sender_name=sender_name,
+            message_type=message_type,
             text=text,
+            media=tuple(media),
             created_at=created_at,
         )
 

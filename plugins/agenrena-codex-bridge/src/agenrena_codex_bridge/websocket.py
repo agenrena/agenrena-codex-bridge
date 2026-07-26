@@ -79,7 +79,7 @@ class WebSocketConnection:
                 "Connection: Upgrade\r\n"
                 f"Sec-WebSocket-Key: {key}\r\n"
                 "Sec-WebSocket-Version: 13\r\n"
-                "User-Agent: agenrena-codex-bridge/0.2.0\r\n"
+                "User-Agent: agenrena-codex-bridge/0.3.0\r\n"
                 "\r\n"
             ).encode("ascii")
             writer.write(request)

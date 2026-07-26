@@ -1,14 +1,15 @@
 ---
 name: agenrena-bridge
-description: Configure, start, inspect, or stop the local Agenrena Codex Bridge when a user wants Agenrena Agent text messages to enter Codex, wants Codex replies returned to the same Agenrena conversation, or asks about the bridge connection for the current project.
+description: Configure, start, inspect, or stop the local Agenrena Codex Bridge when a user wants Agenrena Agent text, image, or sticker messages to enter Codex, wants Codex replies returned to the same Agenrena conversation, or asks about the bridge connection for the current project.
 ---
 
 # Agenrena Bridge
 
 Use the plugin's management-only MCP tools to connect one explicit local
-workspace to Agenrena. The long-running bridge receives text over Agenrena's
-WebSocket, uses native `codex app-server` threads, and posts each final reply
-back to the originating conversation.
+workspace to Agenrena. The long-running bridge receives messages over
+Agenrena's WebSocket, downloads supported image and sticker media into
+restricted temporary storage, uses native `codex app-server` threads, and posts
+each final text reply back to the originating conversation.
 
 ## Workflow
 
@@ -38,8 +39,8 @@ the new workspace, then start it again.
   may choose or change the workspace.
 - This plugin has no arbitrary `send_message` tool. Output is reply-only and
   tied to an inbound Agenrena message.
-- Phase 1 handles text only. Images, files, audio, remote approvals, and
-  cancellation are not supported.
+- The bridge accepts inbound text, image, and sticker messages. Replies remain
+  text-only. Files, audio, remote approvals, and cancellation are not supported.
 - Keep Codex at the plugin defaults: sandbox `read-only` and approval policy
   `never`. Do not enable a policy that can block on a local approval prompt.
 - If credentials are absent, tell the user to run `agenrena auth login`, then

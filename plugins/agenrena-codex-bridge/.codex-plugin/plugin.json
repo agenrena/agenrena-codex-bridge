@@ -1,7 +1,7 @@
 {
   "name": "agenrena-codex-bridge",
-  "version": "0.2.0",
-  "description": "Connect Agenrena Agent text messages to native Codex app-server threads and reply to the same conversation.",
+  "version": "0.3.0+codex.20260726070644",
+  "description": "Connect Agenrena Agent text, image, and sticker messages to native Codex app-server threads and reply to the same conversation.",
   "author": {
     "name": "Agenrena"
   },
@@ -10,6 +10,8 @@
     "agenrena",
     "codex",
     "messaging",
+    "image",
+    "sticker",
     "websocket",
     "agent"
   ],
@@ -18,7 +20,9 @@
   "interface": {
     "displayName": "Agenrena Codex Bridge",
     "shortDescription": "Connect Agenrena messages to Codex",
-    "longDescription": "Receive Agenrena Agent text messages over WebSocket, continue native Codex threads in one configured local workspace, and reply through the Agenrena Agent API.",
+    "longDescription": "Receive Agenrena Agent text, image, and sticker messages over WebSocket, continue native Codex threads in one configured local workspace, and reply through the Agenrena Agent API.",
+    "brandColor": "#8a5021",
+    "logo": "./assets/icon.jpg",
     "developerName": "Agenrena",
     "category": "Productivity",
     "capabilities": [

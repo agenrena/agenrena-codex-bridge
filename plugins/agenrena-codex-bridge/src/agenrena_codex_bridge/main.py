@@ -9,6 +9,7 @@ from .agenrena import AgenrenaAPIClient, AgenrenaWebSocketClient
 from .bridge import BridgeService
 from .codex import CodexRunner
 from .config import ConfigurationError, Settings
+from .media import MediaStore
 from .state import StateStore
 
 
@@ -17,6 +18,8 @@ LOGGER = logging.getLogger(__name__)
 
 async def run(settings: Settings) -> None:
     state_store = StateStore(settings.state_dir / "bridge-state.json")
+    media_store = MediaStore(settings.state_dir / "media")
+    await media_store.prepare()
     service = BridgeService(
         message_source=AgenrenaWebSocketClient(
             ws_url=settings.ws_url,
@@ -36,6 +39,7 @@ async def run(settings: Settings) -> None:
             timeout_seconds=settings.codex_turn_timeout_seconds,
         ),
         state_store=state_store,
+        media_store=media_store,
     )
 
     loop = asyncio.get_running_loop()

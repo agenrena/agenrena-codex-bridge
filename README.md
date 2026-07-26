@@ -1,7 +1,7 @@
 # Agenrena Codex Bridge
 
-A Codex plugin that connects Agenrena Agent text messages to a local Codex
-project:
+A Codex plugin that connects Agenrena Agent text, image, and sticker messages
+to a local Codex project:
 
 ```text
 Agenrena Agent WebSocket
@@ -11,10 +11,17 @@ Codex app-server
 Agenrena Agent HTTP reply API
 ```
 
-Phase 1 is text-only and reply-only. An Agenrena message starts or resumes a
-native Codex thread, and Codex's final answer is sent back to that same
-conversation. The plugin does not expose a tool for initiating arbitrary
+Inbound messages may contain text, images, or a sticker. An Agenrena message
+starts or resumes a native Codex thread, downloaded media is supplied through
+Codex `localImage` inputs, and Codex's final text answer is sent back to that
+same conversation. The plugin does not expose a tool for initiating arbitrary
 Agenrena messages.
+
+When present, the sender's Agenrena ID and display name are supplied to Codex
+as a separate, JSON-encoded metadata text item before the user text or media.
+The values are explicitly labeled as untrusted data, not instructions. This
+metadata becomes part of the native Codex thread history. Messages without
+sender data continue without a metadata item.
 
 See [PLAN.md](PLAN.md) for the protocol contracts and later phases.
 
@@ -124,8 +131,8 @@ The plugin stores non-secret configuration at:
 ~/.config/agenrena-codex-bridge/config.json
 ```
 
-Runtime status, logs, Codex thread mappings, and deduplication state are stored
-at:
+Runtime status, logs, Codex thread mappings, deduplication state, and temporary
+inbound media are stored at:
 
 ```text
 ~/.local/state/agenrena-codex-bridge/
@@ -134,6 +141,11 @@ at:
 They can be redirected with `AGENRENA_BRIDGE_CONFIG_DIR`,
 `AGENRENA_BRIDGE_CONFIG_FILE`, `XDG_CONFIG_HOME`, `BRIDGE_STATE_DIR`, or
 `XDG_STATE_HOME`.
+
+Inbound media is limited to nine images, 20 MiB per image, and 50 MiB total per
+message. The bridge accepts public HTTPS image URLs, rejects non-public network
+targets, validates image signatures, and removes temporary files after each
+Codex turn.
 
 ## Codex safety defaults
 

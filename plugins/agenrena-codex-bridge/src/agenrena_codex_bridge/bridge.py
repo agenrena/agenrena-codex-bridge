@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, AsyncIterator, Mapping, Optional, Protocol
+from typing import Any, AsyncIterator, Mapping, Optional, Protocol, Sequence
 
 from .codex import CodexRunner
-from .models import IncomingTextMessage, PendingReply
+from .media import MaterializedBatch, MaterializedMedia, MediaStore
+from .models import IncomingMessage, PendingReply
 from .state import StateStore
 
 
@@ -26,8 +27,9 @@ class TurnRunner(Protocol):
     async def run_turn(
         self,
         *,
-        message: IncomingTextMessage,
+        message: IncomingMessage,
         thread_id: Optional[str],
+        media: Sequence[MaterializedMedia] = (),
     ):
         ...
 
@@ -40,11 +42,13 @@ class BridgeService:
         reply_client: ReplyClient,
         codex_runner: CodexRunner,
         state_store: StateStore,
+        media_store: Optional[MediaStore] = None,
     ):
         self.message_source = message_source
         self.reply_client = reply_client
         self.codex_runner = codex_runner
         self.state_store = state_store
+        self.media_store = media_store
         self._conversation_locks: dict[str, asyncio.Lock] = {}
         self._inflight_message_ids: set[str] = set()
         self._tasks: set[asyncio.Task[None]] = set()
@@ -55,7 +59,7 @@ class BridgeService:
 
         try:
             async for payload in self.message_source.messages():
-                message = IncomingTextMessage.from_payload(payload)
+                message = IncomingMessage.from_payload(payload)
                 if message is None:
                     message_type = str(payload.get("message_type") or "unknown")
                     LOGGER.info(
@@ -91,11 +95,19 @@ class BridgeService:
             if self._tasks:
                 await asyncio.gather(*self._tasks, return_exceptions=True)
 
-    async def _handle_message(self, message: IncomingTextMessage) -> None:
+    async def _handle_message(self, message: IncomingMessage) -> None:
         lock = self._conversation_locks.setdefault(
             message.conversation_id, asyncio.Lock()
         )
+        media_batch: Optional[MaterializedBatch] = None
         try:
+            if message.media:
+                if self.media_store is None:
+                    raise RuntimeError(
+                        "A media store is required for image and sticker messages."
+                    )
+                media_batch = await self.media_store.materialize(message.media)
+
             async with lock:
                 if await self.state_store.is_completed(message.message_id):
                     return
@@ -108,6 +120,7 @@ class BridgeService:
                     result = await self.codex_runner.run_turn(
                         message=message,
                         thread_id=thread_id,
+                        media=media_batch.items if media_batch else (),
                     )
                     pending = PendingReply(
                         inbound_message_id=message.message_id,
@@ -134,6 +147,8 @@ class BridgeService:
                 message.conversation_id,
             )
         finally:
+            if media_batch is not None:
+                await media_batch.cleanup()
             self._inflight_message_ids.discard(message.message_id)
 
     async def _flush_pending_replies(self) -> None:
