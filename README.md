@@ -17,11 +17,11 @@ Codex `localImage` inputs, and Codex's final text answer is sent back to that
 same conversation. The plugin does not expose a tool for initiating arbitrary
 Agenrena messages.
 
-When present, the sender's Agenrena ID and display name are supplied to Codex
-as a separate, JSON-encoded metadata text item before the user text or media.
-The values are explicitly labeled as untrusted data, not instructions. This
-metadata becomes part of the native Codex thread history. Messages without
-sender data continue without a metadata item.
+When present, the sender's platform-supplied Agenrena ID is provided to Codex
+as a short, JSON-encoded metadata text item before the user text or media.
+Sender display names are not forwarded. This metadata becomes part of the
+native Codex thread history. Messages without a sender ID continue without a
+metadata item.
 
 See [PLAN.md](PLAN.md) for the protocol contracts and later phases.
 

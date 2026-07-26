@@ -37,7 +37,7 @@ class FakeCodexRunner:
     def __init__(self):
         self.thread_inputs: list[Optional[str]] = []
         self.media_inputs: list[list[str]] = []
-        self.sender_inputs: list[tuple[Optional[str], Optional[str]]] = []
+        self.sender_inputs: list[Optional[str]] = []
 
     async def run_turn(
         self,
@@ -48,7 +48,7 @@ class FakeCodexRunner:
     ) -> CodexTurnResult:
         self.thread_inputs.append(thread_id)
         self.media_inputs.append([item.kind for item in media])
-        self.sender_inputs.append((message.sender_id, message.sender_name))
+        self.sender_inputs.append(message.sender_id)
         return CodexTurnResult(
             thread_id=thread_id or "thread-created",
             turn_id=f"turn-{message.message_id}",
@@ -77,7 +77,6 @@ def payload(
     text: str,
     *,
     sender_id: str = "user-1",
-    sender_name: str = "Alice",
 ) -> dict[str, Any]:
     return {
         "id": message_id,
@@ -86,7 +85,7 @@ def payload(
         "sender": {
             "type": "user",
             "id": sender_id,
-            "display_name": sender_name,
+            "display_name": "Ignored display name",
         },
         "text": text,
         "created_at": "2026-07-24T10:00:00Z",
@@ -157,13 +156,11 @@ class BridgeServiceTests(unittest.IsolatedAsyncioTestCase):
                         "message-alice",
                         "from Alice",
                         sender_id="user-alice",
-                        sender_name="Alice",
                     ),
                     payload(
                         "message-bob",
                         "from Bob",
                         sender_id="user-bob",
-                        sender_name="Bob",
                     ),
                 ]
             )
@@ -180,8 +177,8 @@ class BridgeServiceTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(
                 codex.sender_inputs,
                 [
-                    ("user-alice", "Alice"),
-                    ("user-bob", "Bob"),
+                    "user-alice",
+                    "user-bob",
                 ],
             )
             self.assertEqual(codex.thread_inputs, [None, "thread-created"])

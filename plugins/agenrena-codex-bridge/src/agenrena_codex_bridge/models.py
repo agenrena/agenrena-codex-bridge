@@ -16,7 +16,6 @@ class IncomingMessage:
     message_id: str
     conversation_id: str
     sender_id: Optional[str]
-    sender_name: Optional[str]
     message_type: str
     text: str
     media: tuple[IncomingMedia, ...]
@@ -75,13 +74,11 @@ class IncomingMessage:
             sender = {}
 
         sender_id = str(sender.get("id") or "").strip() or None
-        sender_name = str(sender.get("display_name") or "").strip() or None
         created_at = str(payload.get("created_at") or "").strip() or None
         return cls(
             message_id=message_id,
             conversation_id=conversation_id,
             sender_id=sender_id,
-            sender_name=sender_name,
             message_type=message_type,
             text=text,
             media=tuple(media),

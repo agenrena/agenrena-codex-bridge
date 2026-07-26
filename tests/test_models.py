@@ -25,7 +25,8 @@ class ModelTests(unittest.TestCase):
         self.assertIsNotNone(message)
         assert message is not None
         self.assertEqual(message.text, "hello Codex")
-        self.assertEqual(message.sender_name, "Alice")
+        self.assertEqual(message.sender_id, "user-1")
+        self.assertFalse(hasattr(message, "sender_name"))
         self.assertEqual(message.message_type, "text")
         self.assertEqual(message.media, ())
 
