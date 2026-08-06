@@ -1,11 +1,11 @@
 {
   "mcpServers": {
     "agenrena-codex-bridge": {
-      "command": "agenrena",
+      "command": "node",
       "args": [
-        "codex-bridge",
-        "mcp-server"
-      ]
+        "./runtime/mcp-server.mjs"
+      ],
+      "cwd": "."
     }
   }
 }

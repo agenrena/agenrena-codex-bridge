@@ -1,21 +1,23 @@
 # Agenrena Codex Bridge
 
-A Codex plugin that connects Agenrena Agent text, image, and sticker messages
+A Codex plugin-owned adapter that connects normalized Agenrena Agent messages
 to a local Codex project:
 
 ```text
-Agenrena Agent WebSocket
-        ↓
+Agenrena WS / REST / media
+        ↕
+agenrena agent bridge --stdio
+        ↕
+plugin-owned daemon
+        ↕
 Codex app-server
-        ↓
-Agenrena Agent HTTP reply API
 ```
 
 Inbound messages may contain text, images, or a sticker. An Agenrena message
 starts or resumes a native Codex thread, downloaded media is supplied through
-Codex `localImage` inputs, and Codex's final text answer is sent back to that
-same conversation. The plugin does not expose a tool for initiating arbitrary
-Agenrena messages.
+Codex `localImage` inputs, and Codex's final text plus images generated during
+that turn are sent back to the same conversation. The plugin does not expose a
+tool for initiating arbitrary Agenrena messages.
 
 When present, the sender's platform-supplied Agenrena ID is provided to Codex
 as a short, JSON-encoded metadata text item before the user text or media.
@@ -34,10 +36,13 @@ See [PLAN.md](PLAN.md) for the protocol contracts and later phases.
   registration.
 - `plugins/agenrena-codex-bridge/skills/agenrena-bridge`: instructions for
   Codex to configure and operate the bridge safely.
-- `plugins/agenrena-codex-bridge/.mcp.json`: starts the bridge through the
-  installed Agenrena CLI.
-- The Agenrena CLI owns the Go WebSocket, Codex app-server, reply API, and
-  background-process implementation.
+- `plugins/agenrena-codex-bridge/.mcp.json`: starts the plugin's management MCP.
+- `plugins/agenrena-codex-bridge/runtime`: dependency-free Node MCP, supervisor,
+  daemon, generic bridge client, Codex app-server client, and durable state.
+- The Agenrena CLI owns only authenticated transport: WebSocket, REST, media,
+  route generation, retry, and reconnect.
+- The plugin owns Codex app-server, thread continuity, route-keyed state,
+  deduplication, pending replies, workspace, sandbox, and approval policy.
 
 The MCP server exposes only:
 
@@ -50,9 +55,10 @@ It deliberately has no `send_message` tool.
 
 ## Install from GitHub
 
-The `agenrena` and `codex` executables are required. Users do not need Python,
-Go, a virtual environment, or any pip/npm dependencies. Install or update the
-Agenrena CLI before installing the plugin:
+The `agenrena` (0.9.0 or newer) and `codex` executables are required. Users do
+not need Python, Go, a virtual environment, npm, or other packages. The plugin
+reuses the Node runtime supplied to local Codex plugins and spawns its daemon
+with that same executable.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/agenrena/agenrena-cli/main/install.sh | sh
@@ -88,45 +94,15 @@ tools. Ask:
 Connect this Codex project to Agenrena.
 ```
 
-Codex will use the current project's absolute directory as the workspace,
-validate the existing Agenrena credentials, save non-secret configuration, and
-start the background bridge.
+Codex will save the current project's absolute directory as plugin-only
+configuration and start the background bridge. Agenrena credentials stay
+entirely inside the CLI.
 
 ## Credentials
 
-By default, setup reads the same credential file used by the Agenrena CLI:
-
-```text
-~/.config/agenrena/credentials.json
-```
-
-Expected content:
-
-```json
-{
-  "version": 1,
-  "auth_type": "api_key",
-  "api_key": "agr_..."
-}
-```
-
-If it is missing, run:
-
-```bash
-agenrena auth login
-```
-
-For a different Agenrena CLI config directory, provide that directory during
-plugin setup. Environment overrides are also supported:
-
-```bash
-export AGENRENA_CONFIG_DIR=/path/to/agenrena-config
-export AGENRENA_CREDENTIALS_FILE=/secure/path/credentials.json
-```
-
-The API key is used only for the WebSocket token and Agent API Bearer
-authentication. It is never copied into the bridge config, process file, or
-logs.
+The plugin never opens the Agenrena credential file. `agenrena agent bridge
+--stdio` loads the credentials established during CLI onboarding and returns a
+sanitized authentication error if onboarding is incomplete.
 
 ## Local files
 
@@ -136,21 +112,18 @@ The plugin stores non-secret configuration at:
 ~/.config/agenrena-codex-bridge/config.json
 ```
 
-Runtime status, logs, Codex thread mappings, deduplication state, and temporary
-inbound media are stored at:
+Runtime status, logs, Codex thread mappings, deduplication state, temporary
+inbound media, and pending outbound generated images are stored at:
 
 ```text
 ~/.local/state/agenrena-codex-bridge/
 ```
 
-They can be redirected with `AGENRENA_BRIDGE_CONFIG_DIR`,
-`AGENRENA_BRIDGE_CONFIG_FILE`, `XDG_CONFIG_HOME`, `BRIDGE_STATE_DIR`, or
-`XDG_STATE_HOME`.
-
-Inbound media is limited to nine images, 20 MiB per image, and 50 MiB total per
-message. The bridge accepts public HTTPS image URLs, rejects non-public network
-targets, validates image signatures, and removes temporary files after each
-Codex turn.
+They can be redirected with `AGENRENA_CODEX_BRIDGE_CONFIG_FILE`,
+`AGENRENA_CODEX_BRIDGE_STATE_DIR`, `XDG_CONFIG_HOME`, or `XDG_STATE_HOME`.
+Inbound media validation and retention are owned by the generic CLI bridge.
+The plugin stages generated outbound images here until the CLI confirms the
+reply was sent, then removes them.
 
 ## Codex safety defaults
 
@@ -178,38 +151,10 @@ export LOG_LEVEL=INFO
 saves the selected workspace in the bridge config, so another user does not
 need to export it on every launch.
 
-## Standalone mode
-
-The underlying bridge can still be run without Codex plugin management:
-
-```bash
-export CODEX_WORKSPACE=/absolute/path/to/project
-agenrena codex-bridge daemon
-```
-
-To select another Agenrena environment, its WebSocket endpoint must still use
-TLS:
-
-```bash
-export AGENRENA_API_BASE=https://staging-api.agenrena.com/api/agent-api
-export AGENRENA_WS_URL=wss://staging-api.agenrena.com/ws/agent/events/
-```
-
-Production defaults are:
-
-```text
-AGENRENA_API_BASE=https://api.agenrena.com/api/agent-api
-AGENRENA_WS_URL=wss://api.agenrena.com/ws/agent/events/
-```
-
-The runtime rejects `ws://` endpoints.
-
 ## Tests
 
-The bridge implementation and its fake Agenrena/Codex tests live in the
-Agenrena CLI repository:
+The plugin runtime tests use only Node's built-in test runner:
 
 ```bash
-cd /path/to/agenrena-cli
-go test -race ./...
+node --test plugins/agenrena-codex-bridge/runtime/runtime.test.mjs
 ```

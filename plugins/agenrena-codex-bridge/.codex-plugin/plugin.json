@@ -1,7 +1,7 @@
 {
   "name": "agenrena-codex-bridge",
-  "version": "0.4.0+codex.20260726184502",
-  "description": "Connect Agenrena Agent text, image, and sticker messages to native Codex app-server threads and reply to the same conversation.",
+  "version": "1.0.0+codex.20260804143930",
+  "description": "Plugin-owned Codex adapter for the generic Agenrena Agent Bridge.",
   "author": {
     "name": "Agenrena"
   },
@@ -20,7 +20,7 @@
   "interface": {
     "displayName": "Agenrena Codex Bridge",
     "shortDescription": "Connect Agenrena messages to Codex",
-    "longDescription": "Receive Agenrena Agent text, image, and sticker messages over WebSocket, continue native Codex threads in one configured local workspace, and reply through the Agenrena Agent API.",
+    "longDescription": "Use the generic Agenrena CLI transport while this plugin owns Codex app-server threads, workspace policy, durable route state, and background process management.",
     "brandColor": "#8a5021",
     "logo": "./assets/icon.jpg",
     "developerName": "Agenrena",

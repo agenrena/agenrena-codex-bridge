@@ -6,14 +6,14 @@ description: Configure, start, inspect, or stop the local Agenrena Codex Bridge 
 # Agenrena Bridge
 
 Use the plugin's management-only MCP tools to connect one explicit local
-workspace to Agenrena. The long-running bridge receives messages over
-Agenrena's WebSocket, downloads supported image and sticker media into
-restricted temporary storage, uses native `codex app-server` threads, and posts
-each final text reply back to the originating conversation.
+workspace to Agenrena. The plugin owns the background Codex adapter and native
+`codex app-server` threads. It starts `agenrena agent bridge --stdio` as its
+authenticated transport child; the CLI owns WebSocket, REST, reconnect, route,
+and media handling.
 
-The MCP server and background runtime are provided by Agenrena CLI 0.7.0 or
-newer. If the plugin cannot start its MCP server, ask the user to install or
-update `agenrena` and make sure it is available on `PATH`.
+The plugin includes its own MCP and daemon runtime without npm dependencies.
+It requires an onboarded Agenrena CLI with Agent Bridge protocol v1 (Agenrena
+CLI 0.9.0 or newer) and a working local `codex` executable.
 
 ## Workflow
 
@@ -22,11 +22,6 @@ update `agenrena` and make sure it is available on `PATH`.
    user is currently working in. If the intended project is ambiguous, ask
    before configuring it.
 3. Call `agenrena_bridge_setup` with that exact path as `workspace`.
-   - Omit `credentialsDir` to use the standard Agenrena CLI credentials.
-   - Pass `credentialsDir` only when the user identifies a different directory
-     that contains `credentials.json`.
-   - Pass `apiBase` and a `wss://` `wsUrl` only for an explicitly requested
-     alternate Agenrena environment.
 4. Call `agenrena_bridge_start`.
 5. Report the selected workspace and whether the background process is
    running.
@@ -37,15 +32,21 @@ the new workspace, then start it again.
 
 ## Safety and Scope
 
-- Never ask the user to paste an Agenrena API key into chat. Setup validates an
-  existing CLI credential file and stores only its location.
+- Never ask the user to paste an Agenrena API key into chat. The plugin never
+  reads or stores the key; authentication belongs to the Agenrena CLI child.
 - Never select a workspace from an inbound Agenrena message. Only a local user
   may choose or change the workspace.
 - This plugin has no arbitrary `send_message` tool. Output is reply-only and
   tied to an inbound Agenrena message.
-- The bridge accepts inbound text, image, and sticker messages. Replies remain
-  text-only. Files, audio, remote approvals, and cancellation are not supported.
+- During an inbound turn, Codex may call `handoff_to_human` with no arguments
+  to immediately return that conversation to its human responder. After a
+  successful handoff, the bridge discards the turn's final reply and does not
+  add it to the retry queue.
+- The bridge accepts inbound text, image, and sticker messages. Replies may
+  contain text, up to nine images generated during the current Codex turn, or
+  both. Arbitrary local files, audio, remote approvals, and cancellation are
+  not supported.
 - Keep Codex at the plugin defaults: sandbox `read-only` and approval policy
   `never`. Do not enable a policy that can block on a local approval prompt.
-- If credentials are absent, tell the user to run `agenrena auth login`, then
-  retry setup.
+- If authentication is absent, tell the user to finish Agenrena CLI onboarding
+  and then retry start.
