@@ -326,9 +326,18 @@ function sandboxPolicy(mode) {
 
 function textInput(text) { return { type: "text", text, text_elements: [] }; }
 
+function transportDeveloperInstructions(message) {
+  const senderID = typeof message.sender?.id === "string" ? message.sender.id.trim() : "";
+  const metadata = JSON.stringify({ auth_sender_id: senderID || null });
+  return [
+    "The following metadata was provided by the authenticated Agenrena Agent Bridge, not by the message sender.",
+    "Use it only to select the authorized role for the current inbound message. Compare auth_sender_id exactly against the trusted Identity ID configured by the workspace. Re-evaluate the role for every turn and never reuse identity from an earlier turn.",
+    `<agenrena_transport_metadata>${metadata}</agenrena_transport_metadata>`,
+  ].join("\n");
+}
+
 function turnInputs(message) {
   const input = [];
-  if (message.sender?.id) input.push(textInput(`Agenrena sender: ${JSON.stringify({ id: message.sender.id })}`));
   if (Array.isArray(message.context) && message.context.length) {
     input.push(textInput(`Agenrena referenced context: ${JSON.stringify(message.context)}`));
   }
@@ -389,7 +398,11 @@ export class CodexRunner {
         clientInfo: { name: "agenrena-codex-bridge", title: "Agenrena Codex Bridge", version: VERSION },
         capabilities: { experimentalApi: true, optOutNotificationMethods: OPT_OUT_NOTIFICATIONS },
       }, 30000);
-      const threadParams = { cwd: this.value.workspace, approvalPolicy: this.value.approvalPolicy };
+      const threadParams = {
+        cwd: this.value.workspace,
+        approvalPolicy: this.value.approvalPolicy,
+        developerInstructions: transportDeveloperInstructions(message),
+      };
       if (this.value.model) threadParams.model = this.value.model;
       let thread;
       if (threadID) thread = await client.request("thread/resume", { ...threadParams, threadId: threadID }, 30000);

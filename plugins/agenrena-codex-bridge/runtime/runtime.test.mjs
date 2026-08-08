@@ -181,6 +181,53 @@ test("Codex runner speaks app-server JSONL and returns the final answer", async 
   assert.deepEqual(result, { threadID: "thread-1", turnID: "turn-1", text: "final reply", media: [], handedOff: false });
 });
 
+test("Codex runner refreshes trusted sender metadata for every turn in one thread", async () => {
+  const { root } = tempEnv();
+  const fake = join(root, "fake-auth-app-server.mjs");
+  const capture = join(root, "requests.jsonl");
+  writeFileSync(fake, `
+    import { appendFileSync } from "node:fs";
+    import readline from "node:readline";
+    const capture = ${JSON.stringify(capture)};
+    const lines = readline.createInterface({ input: process.stdin });
+    lines.on("line", raw => {
+      const request = JSON.parse(raw);
+      if (request.method === "initialize") process.stdout.write(JSON.stringify({ id: request.id, result: {} }) + "\\n");
+      if (request.method === "thread/start" || request.method === "thread/resume") {
+        appendFileSync(capture, JSON.stringify({ method: request.method, params: request.params }) + "\\n");
+        process.stdout.write(JSON.stringify({ id: request.id, result: { thread: { id: "shared-thread" } } }) + "\\n");
+      }
+      if (request.method === "turn/start") {
+        appendFileSync(capture, JSON.stringify({ method: request.method, params: request.params }) + "\\n");
+        process.stdout.write(JSON.stringify({ id: request.id, result: { turn: { id: "turn-auth" } } }) + "\\n");
+        process.stdout.write(JSON.stringify({ method: "item/completed", params: { turnId: "turn-auth", item: { id: "item-auth", type: "agentMessage", phase: "final_answer", text: "ok" } } }) + "\\n");
+        process.stdout.write(JSON.stringify({ method: "turn/completed", params: { turn: { id: "turn-auth", status: "completed" } } }) + "\\n");
+      }
+    });
+  `);
+  const runner = new CodexRunner({
+    codexCommand: [process.execPath, fake], workspace: root, model: "",
+    sandboxMode: "read-only", approvalPolicy: "never", timeoutMs: 2000,
+  });
+
+  const first = await runner.runTurn({
+    id: "m-owner", route: "same-route", sender: { id: "owner-id" }, text: "first", media: [], context: [],
+  });
+  await runner.runTurn(
+    { id: "m-guest", route: "same-route", sender: { id: "guest-id" }, text: "second", media: [], context: [] },
+    first.threadID,
+  );
+
+  const requests = readFileSync(capture, "utf8").trim().split("\n").map(value => JSON.parse(value));
+  assert.equal(requests[0].method, "thread/start");
+  assert.match(requests[0].params.developerInstructions, /<agenrena_transport_metadata>{"auth_sender_id":"owner-id"}<\/agenrena_transport_metadata>/);
+  assert.deepEqual(requests[1].params.input, [{ type: "text", text: "first", text_elements: [] }]);
+  assert.equal(requests[2].method, "thread/resume");
+  assert.equal(requests[2].params.threadId, "shared-thread");
+  assert.match(requests[2].params.developerInstructions, /<agenrena_transport_metadata>{"auth_sender_id":"guest-id"}<\/agenrena_transport_metadata>/);
+  assert.deepEqual(requests[3].params.input, [{ type: "text", text: "second", text_elements: [] }]);
+});
+
 test("Codex runner exposes handoff and reports a successful tool call", async () => {
   const { root } = tempEnv();
   const fake = join(root, "fake-handoff-app-server.mjs");
