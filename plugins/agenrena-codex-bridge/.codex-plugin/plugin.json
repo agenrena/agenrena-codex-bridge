@@ -1,6 +1,6 @@
 {
   "name": "agenrena-codex-bridge",
-  "version": "1.0.0+codex.20260808052531",
+  "version": "1.0.0+codex.20260812071118",
   "description": "Plugin-owned Codex adapter for the generic Agenrena Agent Bridge.",
   "author": {
     "name": "Agenrena"

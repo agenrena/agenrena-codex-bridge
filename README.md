@@ -19,11 +19,11 @@ Codex `localImage` inputs, and Codex's final text plus images generated during
 that turn are sent back to the same conversation. The plugin does not expose a
 tool for initiating arbitrary Agenrena messages.
 
-When present, the sender's platform-supplied Agenrena ID is provided to Codex
-as a short, JSON-encoded metadata text item before the user text or media.
-Sender display names are not forwarded. This metadata becomes part of the
-native Codex thread history. Messages without a sender ID continue without a
-metadata item.
+For every inbound turn, the sender's platform-supplied Agenrena ID is provided
+to Codex as authenticated transport metadata in developer instructions. It is
+refreshed when starting or resuming a thread, is kept separate from user text,
+and is `null` when the transport supplies no sender ID. Sender display names
+are not forwarded.
 
 See [PLAN.md](PLAN.md) for the protocol contracts and later phases.
 
@@ -147,9 +147,8 @@ export CODEX_TURN_TIMEOUT_SECONDS=900
 export LOG_LEVEL=INFO
 ```
 
-`CODEX_WORKSPACE` is still accepted for standalone use, but normal plugin setup
-saves the selected workspace in the bridge config, so another user does not
-need to export it on every launch.
+Normal plugin setup saves the selected workspace in the bridge config, so it
+does not need to be exported on every launch.
 
 ## Tests
 

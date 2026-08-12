@@ -319,7 +319,8 @@ const OPT_OUT_NOTIFICATIONS = [
 ];
 
 function sandboxPolicy(mode) {
-  const values = { "read-only": "readOnly", "workspace-write": "workspaceWrite", "danger-full-access": "dangerFullAccess" };
+  if (mode === "read-only") return { type: "readOnly", networkAccess: true };
+  const values = { "workspace-write": "workspaceWrite", "danger-full-access": "dangerFullAccess" };
   if (!values[mode]) throw new Error(`Unsupported Codex sandbox mode: ${mode}`);
   return { type: values[mode] };
 }

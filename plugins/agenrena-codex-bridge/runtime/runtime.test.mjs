@@ -222,10 +222,12 @@ test("Codex runner refreshes trusted sender metadata for every turn in one threa
   assert.equal(requests[0].method, "thread/start");
   assert.match(requests[0].params.developerInstructions, /<agenrena_transport_metadata>{"auth_sender_id":"owner-id"}<\/agenrena_transport_metadata>/);
   assert.deepEqual(requests[1].params.input, [{ type: "text", text: "first", text_elements: [] }]);
+  assert.deepEqual(requests[1].params.sandboxPolicy, { type: "readOnly", networkAccess: true });
   assert.equal(requests[2].method, "thread/resume");
   assert.equal(requests[2].params.threadId, "shared-thread");
   assert.match(requests[2].params.developerInstructions, /<agenrena_transport_metadata>{"auth_sender_id":"guest-id"}<\/agenrena_transport_metadata>/);
   assert.deepEqual(requests[3].params.input, [{ type: "text", text: "second", text_elements: [] }]);
+  assert.deepEqual(requests[3].params.sandboxPolicy, { type: "readOnly", networkAccess: true });
 });
 
 test("Codex runner exposes handoff and reports a successful tool call", async () => {
