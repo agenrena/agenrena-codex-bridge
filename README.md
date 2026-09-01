@@ -1,23 +1,28 @@
 # Agenrena Codex Bridge
 
-A Codex plugin-owned adapter that connects normalized Agenrena Agent messages
-to a local Codex project:
+A Codex plugin surface for the native Go bridge in the Agenrena CLI. It
+connects normalized Agenrena Agent messages and experimental incoming voice
+calls to a local Codex project:
 
 ```text
 Agenrena WS / REST / media
         ↕
 agenrena agent bridge --stdio
         ↕
-plugin-owned daemon
+Agenrena CLI Codex daemon
         ↕
 Codex app-server
+
+LiveKit WebRTC ↔ Go RTC helper ↔ Codex WebRTC
 ```
 
 Inbound messages may contain text, images, or a sticker. An Agenrena message
 starts or resumes a native Codex thread, downloaded media is supplied through
-Codex `localImage` inputs, and Codex's final text plus images generated during
-that turn are sent back to the same conversation. The plugin does not expose a
-tool for initiating arbitrary Agenrena messages.
+Codex `localImage` inputs, and sanitized turn progress is published over the
+authenticated Agent WebSocket for the existing User Global SSE. Codex's final
+text plus images generated during that turn are still persisted through the
+REST message endpoint and sent back to the same conversation. The plugin does
+not expose a tool for initiating arbitrary Agenrena messages.
 
 For every inbound turn, the sender's platform-supplied Agenrena ID is provided
 to Codex as authenticated transport metadata in developer instructions. It is
@@ -32,17 +37,16 @@ See [PLAN.md](PLAN.md) for the protocol contracts and later phases.
 - `.agents/plugins/marketplace.json`: installable Agenrena marketplace entry.
 - `plugins/agenrena-codex-bridge/.codex-plugin/plugin.json`: Codex plugin
   manifest.
-- `plugins/agenrena-codex-bridge/.mcp.json`: local management MCP server
-  registration.
 - `plugins/agenrena-codex-bridge/skills/agenrena-bridge`: instructions for
   Codex to configure and operate the bridge safely.
-- `plugins/agenrena-codex-bridge/.mcp.json`: starts the plugin's management MCP.
-- `plugins/agenrena-codex-bridge/runtime`: dependency-free Node MCP, supervisor,
-  daemon, generic bridge client, Codex app-server client, and durable state.
-- The Agenrena CLI owns only authenticated transport: WebSocket, REST, media,
-  route generation, retry, and reconnect.
-- The plugin owns Codex app-server, thread continuity, route-keyed state,
-  deduplication, pending replies, workspace, sandbox, and approval policy.
+- `plugins/agenrena-codex-bridge/.mcp.json`: starts a portable launcher that
+  resolves the native CLI and runs `agenrena codex bridge mcp`.
+- The Agenrena CLI owns the compiled Go MCP server and daemon as well as
+  authenticated transport, Codex app-server, thread continuity, route-keyed
+  state, deduplication, pending replies, workspace, sandbox, and approval
+  policy.
+- The plugin owns the Codex-facing registration, prompts, and safe operating
+  instructions.
 
 The MCP server exposes only:
 
@@ -53,12 +57,26 @@ The MCP server exposes only:
 
 It deliberately has no `send_message` tool.
 
+## Experimental voice calls
+
+Incoming voice calls use the same native Go implementation exercised by the
+staging plugin. The Codex bridge coordinates call signaling and app-server SDP
+exchange, while `agenrena-rtc-helper` bridges LiveKit and Codex WebRTC media
+directly. Each call starts a fresh Codex thread and does not reuse the text
+conversation's thread mapping.
+
+The plugin enables calls with `AGENRENA_CODEX_BRIDGE_CALLS=true`, pins realtime
+protocol `v3`, and requests `gpt-live-1-codex`. This remains experimental:
+end-to-end reliability has not been fully validated, and Codex realtime account
+entitlement may reject call creation.
+
 ## Install from GitHub
 
-The `agenrena` (0.9.0 or newer) and `codex` executables are required. Users do
-not need Python, Go, a virtual environment, npm, or other packages. The plugin
-reuses the Node runtime supplied to local Codex plugins and spawns its daemon
-with that same executable.
+The `agenrena` (0.12.0 or newer), matching `agenrena-rtc-helper`, and `codex`
+executables are required for voice calls. The standard Agenrena installer puts
+the CLI and RTC helper together. Users do not need Node.js, npm, Python, Go, a
+virtual environment, or other packages. The compiled Agenrena executable
+provides both the management MCP and detached daemon.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/agenrena/agenrena-cli/main/install.sh | sh
@@ -122,8 +140,8 @@ inbound media, and pending outbound generated images are stored at:
 They can be redirected with `AGENRENA_CODEX_BRIDGE_CONFIG_FILE`,
 `AGENRENA_CODEX_BRIDGE_STATE_DIR`, `XDG_CONFIG_HOME`, or `XDG_STATE_HOME`.
 Inbound media validation and retention are owned by the generic CLI bridge.
-The plugin stages generated outbound images here until the CLI confirms the
-reply was sent, then removes them.
+The native Codex bridge stages generated outbound images here until delivery
+is confirmed, then removes them.
 
 ## Codex safety defaults
 
@@ -144,7 +162,6 @@ Optional environment overrides:
 export CODEX_BIN=codex
 export CODEX_MODEL=
 export CODEX_TURN_TIMEOUT_SECONDS=900
-export LOG_LEVEL=INFO
 ```
 
 Normal plugin setup saves the selected workspace in the bridge config, so it
@@ -152,8 +169,10 @@ does not need to be exported on every launch.
 
 ## Tests
 
-The plugin runtime tests use only Node's built-in test runner:
+The bridge runtime and RTC helper are tested in the Agenrena CLI Go repository:
 
 ```bash
-node --test plugins/agenrena-codex-bridge/runtime/runtime.test.mjs
+go test ./internal/codexbridge ./...
+cd rtc-helper
+go test -tags nolibopusfile ./...
 ```

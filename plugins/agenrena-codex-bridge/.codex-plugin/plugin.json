@@ -1,7 +1,7 @@
 {
   "name": "agenrena-codex-bridge",
-  "version": "1.0.0+codex.20260812071118",
-  "description": "Plugin-owned Codex adapter for the generic Agenrena Agent Bridge.",
+  "version": "1.0.0+codex.20260831175956",
+  "description": "Agenrena bridge for Codex messages and experimental incoming voice calls.",
   "author": {
     "name": "Agenrena"
   },
@@ -12,6 +12,8 @@
     "messaging",
     "image",
     "sticker",
+    "voice",
+    "webrtc",
     "websocket",
     "agent"
   ],
@@ -19,8 +21,8 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Agenrena Codex Bridge",
-    "shortDescription": "Connect Agenrena messages to Codex",
-    "longDescription": "Use the generic Agenrena CLI transport while this plugin owns Codex app-server threads, workspace policy, durable route state, and background process management.",
+    "shortDescription": "Connect Agenrena messages and calls to Codex",
+    "longDescription": "Run the native Go Agenrena Codex bridge and RTC helper for text, image, sticker, and experimental incoming voice-call bridging to Codex.",
     "brandColor": "#8a5021",
     "logo": "./assets/icon.jpg",
     "developerName": "Agenrena",
@@ -33,7 +35,7 @@
     "defaultPrompt": [
       "Connect this Codex project to Agenrena.",
       "Show the Agenrena bridge status.",
-      "Stop the Agenrena bridge."
+      "Connect Agenrena messages and incoming calls to Codex."
     ]
   }
 }

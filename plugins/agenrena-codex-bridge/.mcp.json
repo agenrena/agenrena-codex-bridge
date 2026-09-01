@@ -1,11 +1,16 @@
 {
   "mcpServers": {
     "agenrena-codex-bridge": {
-      "command": "node",
+      "command": "sh",
       "args": [
-        "./runtime/mcp-server.mjs"
+        "./scripts/agenrena-codex-bridge-mcp"
       ],
-      "cwd": "."
+      "cwd": ".",
+      "env": {
+        "AGENRENA_CODEX_BRIDGE_CALLS": "true",
+        "CODEX_REALTIME_VERSION": "v3",
+        "CODEX_REALTIME_MODEL": "gpt-live-1-codex"
+      }
     }
   }
 }

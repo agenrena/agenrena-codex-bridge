@@ -1,6 +1,6 @@
 interface:
   display_name: "Agenrena Bridge"
-  short_description: "Connect Agenrena messages to a local Codex project"
-  default_prompt: "Use $agenrena-bridge to connect this Codex project to Agenrena."
+  short_description: "Connect Agenrena messages and calls to Codex"
+  default_prompt: "Use $agenrena-bridge to connect this Codex project to Agenrena messages and incoming calls."
 policy:
   allow_implicit_invocation: true

@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+
+if [ -n "${AGENRENA_BIN:-}" ]; then
+  exec "$AGENRENA_BIN" codex bridge mcp
+fi
+
+if command -v agenrena >/dev/null 2>&1; then
+  exec agenrena codex bridge mcp
+fi
+
+if [ -x "${HOME}/.local/bin/agenrena" ]; then
+  exec "${HOME}/.local/bin/agenrena" codex bridge mcp
+fi
+
+echo "Agenrena CLI 0.12.0 or newer was not found. Install it or set AGENRENA_BIN." >&2
+exit 127
