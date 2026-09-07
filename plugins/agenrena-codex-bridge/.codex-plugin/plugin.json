@@ -1,6 +1,6 @@
 {
   "name": "agenrena-codex-bridge",
-  "version": "1.0.0+codex.20260831175956",
+  "version": "1.0.0+codex.20260907045051",
   "description": "Agenrena bridge for Codex messages and experimental incoming voice calls.",
   "author": {
     "name": "Agenrena"

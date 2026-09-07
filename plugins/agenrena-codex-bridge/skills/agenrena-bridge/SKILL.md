@@ -14,7 +14,7 @@ for Agenrena's existing User Global SSE; final replies remain durable chat
 messages. The Go RTC helper owns call media.
 
 No Node.js, npm, or language runtime is required. The plugin requires an
-onboarded Agenrena CLI 0.12.0 or newer with Agent Bridge protocol v1 and a
+onboarded Agenrena CLI 0.13.1 or newer with Agent Bridge protocol v1 and a
 working local `codex` executable. Incoming calls also require the matching
 `agenrena-rtc-helper` beside the CLI or available on `PATH`.
 
@@ -55,9 +55,13 @@ the new workspace, then start it again.
   successful handoff, the bridge discards the turn's final reply and does not
   add it to the retry queue.
 - The bridge accepts inbound text, image, and sticker messages. Replies may
-  contain text, up to nine images generated during the current Codex turn, or
-  both. Arbitrary local files, audio attachments, remote approvals, and
-  cancellation are not supported for message replies.
+  contain text, up to nine images, or both. Images Codex generates during the
+  turn are attached automatically. To send an image that already exists on
+  disk, Codex calls `attach_image` with an absolute path; only PNG, JPEG, or
+  GIF files inside the connected workspace or the inbound media of the message
+  being answered are accepted, including nothing reached through a symlink out
+  of the workspace. Audio attachments, remote approvals, and cancellation are
+  not supported for message replies.
 - Transient progress may expose coarse lifecycle state and user-visible Codex
   commentary. It must never expose raw reasoning, command output, local paths,
   secrets, or tool arguments. Progress is not a chat message and must not be

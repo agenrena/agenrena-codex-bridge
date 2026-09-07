@@ -72,7 +72,7 @@ entitlement may reject call creation.
 
 ## Install from GitHub
 
-The `agenrena` (0.12.0 or newer), matching `agenrena-rtc-helper`, and `codex`
+The `agenrena` (0.13.1 or newer), matching `agenrena-rtc-helper`, and `codex`
 executables are required for voice calls. The standard Agenrena installer puts
 the CLI and RTC helper together. Users do not need Node.js, npm, Python, Go, a
 virtual environment, or other packages. The compiled Agenrena executable
@@ -140,8 +140,15 @@ inbound media, and pending outbound generated images are stored at:
 They can be redirected with `AGENRENA_CODEX_BRIDGE_CONFIG_FILE`,
 `AGENRENA_CODEX_BRIDGE_STATE_DIR`, `XDG_CONFIG_HOME`, or `XDG_STATE_HOME`.
 Inbound media validation and retention are owned by the generic CLI bridge.
-The native Codex bridge stages generated outbound images here until delivery
-is confirmed, then removes them.
+The native Codex bridge stages outbound images here until delivery is
+confirmed, then removes them.
+
+Images Codex generates during the turn are attached automatically. Codex may
+also call `attach_image` with an absolute path to send a PNG, JPEG, or GIF that
+already exists inside the connected workspace, or an image from the message
+being answered. Every other path is rejected, including one reached through a
+symlink out of the workspace. Staging copies the file, so the original is never
+moved or deleted.
 
 ## Codex safety defaults
 
